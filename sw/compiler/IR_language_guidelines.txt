@@ -1,0 +1,82 @@
+------------------------------------------------------------------------
+--------------------------- about parser -----------------------------
+The IRParser reads a C-like, expression-oriented syntax with the following features:
+
+1. Function Definitions
+    >>  funcname(nargs) = expr
+    funcname: identifier (function name)
+    nargs: number of arguments (integer)
+    expr: function body (expression)
+    Example:
+    >> add2(2) = $0 + $1
+
+2. Variables
+    Written as $<number>, where the number is the argument index.
+    $0 is the first argument, $1 the second, etc.
+
+3. Constants
+    Decimal or hexadecimal integers.
+    42, 0x2A
+
+4. Operators
+    Unary: -, ~
+    Binary: +, -, *, /, <<, >>, <, |, ^, &
+    Sequencing: ; (evaluates left to right, returns last)
+    Ignore: ignore expr (evaluates and discards result)
+    Examples:
+    >> $0 + 1
+    >> -($1)
+    >> $0 * $1 + 3
+    >> ignore $0
+    >> $0; $1; 42
+
+5. Function Calls
+    Normal call: funcname arg1 arg2 ...
+    Tail call: .funcname arg1 arg2 ... (dot before name)
+    Examples:
+    >> foo $0 1
+    >> .bar $1
+
+6. Conditionals
+    >> if cond then expr1 else expr2
+    Example:
+    >> if $0 < 0 then 0 else $0
+
+7. Parentheses
+    For grouping: (expr)
+
+8. Comments
+    C-style block comments: /* ... */
+
+Example Full Program
+    >> /* Adds two numbers */
+       add(2) = $0 + $1
+
+       /* Absolute value */
+       abs(1) = if $0 < 0 then 0 - $0 else $0
+
+------------------------------------------------------------------------
+--------------------------- about compiler -----------------------------
+The syntax of the language compiled by CompilerBackend:
+
+Constants: Integers (e.g., 42)
+Variables: Represented by Var objects (with an offset)
+Sequences: Lists of statements, e.g., [stmt1, stmt2, ...]
+If expressions: Conditional expressions with cond, then, and else_ branches
+Function definitions: Via FuncDef (with name, nargs, ret, body)
+Function calls: Using @ or @. as the operator, e.g., ['@', func_name, arg1, arg2]
+Operators: Arithmetic and logical, e.g., ['+', a, b], ['-', a, b], ['*', a, b], ['<', a, b], ['|', a, b], ['&', a, b], ['~', a], ['<<', a, b], ['>>', a, b], ['0-', a]
+Ignore: ['ignore', expr] to pop a value and not push the result
+
+Example IR expressions:
+    ['+', 1, 2]                  # 1 + 2
+    ['if', cond, then, else_]    # if cond then then else else_
+    ['@', 'foo', 1, 2]           # call foo(1, 2)
+    ['ignore', expr]             # evaluate expr, discard result
+    [stmt1, stmt2, stmt3]        # sequence of statements
+
+Notes:
+The IR is typically constructed using classes like Const, Var, Seq, If, and FuncDef.
+Lists are interpreted as sequences unless the first element is an operator.
+Function calls use @ (with return location) or @. (direct jump).
+The parser (IRParser) is responsible for converting text input into this IR.
