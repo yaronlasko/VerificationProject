@@ -1,0 +1,84 @@
+/*
+main =
+    let l = 11, h = 20
+    horiz l (h + 1) l;
+    vert h (l + 1) (h + 1);
+    horiz (h - 1) l h;
+    vert l h l
+*/
+main(0) =
+    ignore square 0 10 20;
+    0
+
+/* square(y, x, side): draws a square of given side from (x, y) */
+square(3) =
+    /* top edge: horiz x → x+side at y */
+    ignore horiz $1 ($1 + $0) $2;
+
+    /* bottom edge: horiz x → x+side at y+side */
+    ignore horiz $1 ($1 + $0 + 1) ($2 + $0);
+
+    /* left edge: vert y → y+side at x */
+    ignore vert $1 $2 ($2 + $0);
+
+    /* right edge: vert y → y+side at x+side */
+    ignore vert ($1 + $0) $2 ($2 + $0);
+
+    0
+    
+memset_skip(4) =
+    if 0 < $1 then mem_poke $0 $3; .memset_skip ($3 + $2) $2 ($1 - 1) $0 else 0
+    
+/*
+# memor_skip start skip cnt value : unit =
+#   if 0 < cnt then mem_poke (value | mem_peek(start)) start;
+#                   memor_skip (start + skip) skip (cnt - 1) value
+#              else ()
+*/
+memor_skip(4) =
+    if 0 < $1 then mem_poke ($0 | mem_peek $3) $3; .memor_skip ($3 + $2) $2 ($1 - 1) $0 else 0
+
+/*
+# block x y =
+#   let mask = (x & 1 ? 0xff00 : 0x00ff) in 
+#   memor_skip (0xa000 + 0x80 * y + (x >> 1)) 0x10 0x08 mask
+*/
+block(2) =
+    (if $1 & 1 then 0xff00 else 0x00ff);
+    memor_skip (0xa000 + 0x80 * $0 + ($1 >> 1)) 0x10 0x08 $-1
+
+/*
+# memor_shr_skip start skip cnt value shft : unit =
+#   if 0 < cnt then mem_poke ((value << shft) | mem_peek(start)) start;
+#                   memor_shr_skip (start + skip) skip (cnt - 1) (value >> 1)
+#              else ()
+*/
+memor_shr_skip(5) =
+    if 0 < $2 then ignore mem_poke (($1 << $0) | mem_peek $4) $4;
+                   memor_shr_skip ($4 + $3) $3 ($2 - 1) ($1 >> 1) $0
+              else 0
+
+/*
+# memor_shl_skip start skip cnt value shft : unit =
+#   if 0 < cnt then mem_poke ((value >> shft) | mem_peek(start)) start;
+#                   memor_shr_skip (start + skip) skip (cnt - 1) (value << 1)
+#              else ()
+*/
+memor_shl_skip(5) =
+    if 0 < $2 then ignore mem_poke (($1 >> $0) | mem_peek $4) $4;
+                   memor_shl_skip ($4 + $3) $3 ($2 - 1) ($1 << 1) $0
+              else 0
+
+/* horiz x0 x1 y  */
+horiz(3) =
+    (if $2 < $1 then 1 else (if $1 < $2 then 0xffff else 0));
+    if $-1 then ignore block $2 $0; .horiz ($2 + $-1) $1 $0
+           else 0
+
+/* vert x y0 y1  */
+vert(3) =
+    (if $1 < $0 then 1 else (if $0 < $1 then 0xffff else 0));
+    if $-1 then ignore block $2 $1; .vert $2 ($1 + $-1) $0
+           else 0
+
+
