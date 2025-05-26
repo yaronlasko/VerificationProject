@@ -26,6 +26,23 @@ square(3) =
 
     0
     
+/* draws a square spiral on the screen */
+spiral(0) = 
+    square 15 15 1;
+    square 14 14 3;
+
+    horiz 3 29 3;
+    vert  29 3 29;
+    horiz 29 3 28;
+    vert  3 28 7;
+
+    horiz 3 25 7;
+    vert  25 7 24;
+    horiz 25 7 24;
+    vert  7 24 15;
+
+    horiz 7 15 15;
+
 memset_skip(4) =
     if 0 < $1 then mem_poke $0 $3; .memset_skip ($3 + $2) $2 ($1 - 1) $0 else 0
     
