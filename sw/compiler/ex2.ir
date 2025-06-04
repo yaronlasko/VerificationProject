@@ -1,6 +1,7 @@
 
 main(0) =
-    ignore square 0 10 20;
+    /*ignore square 0 10 20;*/
+    ignore spiral;
     0
 
 /* square(y, x, side): draws a square of given side from (x, y) */
@@ -34,7 +35,7 @@ spiral(0) =
     vert  7 24 15;
 
     horiz 7 15 15;
-
+    0
 memset_skip(4) =
     if 0 < $1 then mem_poke $0 $3; .memset_skip ($3 + $2) $2 ($1 - 1) $0 else 0
     

@@ -1,0 +1,30 @@
+/* draw_horz(x0, x1, y) = draw horizontal line from x0 to x1 at row y */
+draw_horz(3) =
+    (if $2 < $1 then 1 else (if $1 < $2 then 0xffff else 0));   /* dir = 1 or -1 */
+    if $-1 then
+        ignore block $2 $0;
+        .draw_horz ($2 + $-1) $1 $0
+    else 0
+
+/* draw_vert(x, y0, y1) = draw vertical line from y0 to y1 at column x */
+draw_vert(3) =
+    (if $1 < $0 then 1 else (if $0 < $1 then 0xffff else 0));   /* dir = 1 or -1 */
+    if $-1 then
+        ignore block $2 $1;
+        .draw_vert $2 ($1 + $-1) $0
+    else 0
+
+/* block(y, x) = draw 8-pixel vertical strip at (x, y) */
+block(2) =
+    (if $1 & 1 then 0xff00 else 0x00ff);                             /* mask */
+    memor_skip (0xa000 + 0x80 * $0 + ($1 >> 1)) 0x10 0x08 $-1        /* skip=16, count=8 */
+
+/* memor_skip(start, skip, count, value) = repeated vertical write */
+memor_skip(4) =
+    if 0 < $1 then
+        mem_poke ($0 | mem_peek $3) $3;
+        .memor_skip ($3 + $2) $2 ($1 - 1) $0
+    else 0
+
+main(0) = 
+draw_horz 11 20 11

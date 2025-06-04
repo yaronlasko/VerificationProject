@@ -1,0 +1,1 @@
+full adder = 2*half adder
