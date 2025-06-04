@@ -1,11 +1,4 @@
-/*
-main =
-    let l = 11, h = 20
-    horiz l (h + 1) l;
-    vert h (l + 1) (h + 1);
-    horiz (h - 1) l h;
-    vert l h l
-*/
+
 main(0) =
     ignore square 0 10 20;
     0
@@ -24,7 +17,6 @@ square(3) =
     /* right edge: vert y → y+side at x+side */
     ignore vert ($1 + $0) $2 ($2 + $0);
 
-    0
     
 /* draws a square spiral on the screen */
 spiral(0) = 
