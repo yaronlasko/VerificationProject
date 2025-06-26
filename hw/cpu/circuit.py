@@ -43,6 +43,8 @@ def net_to_smt(wb, mems):
         match op:
             case 'w': # Wire assignment
                 # TODO wire width adaption
+                assertions.append(dest.bitwidth == args[0].bitwidth)
+
                 assertion = dest == args[0]
                 assertions.append(assertion)
                 ops.append(('assign', args[0], dest))
@@ -50,6 +52,9 @@ def net_to_smt(wb, mems):
             case '&':  # Bitwise AND
                 if len(args) == 2:
                     # TODO assert input width are same
+                    assertions.append((args[0].bitwidth == args[1].bitwidth)
+                                      and (dest.bitwidth == args[0]))
+                    
                     assertion = dest == (args[0] & args[1])
                     assertions.append(assertion)
                     ops.append(('and', args[0], args[1], dest))
@@ -57,6 +62,9 @@ def net_to_smt(wb, mems):
             case '|':  # Bitwise OR
                 if len(args) == 2:
                     # TODO assert input width are same
+                    assertions.append((args[0].bitwidth == args[1].bitwidth)
+                                      and (dest.bitwidth == args[0]))
+                    
                     assertion = dest == (args[0] | args[1])
                     assertions.append(assertion)
                     ops.append(('or', args[0], args[1], dest))
@@ -64,11 +72,17 @@ def net_to_smt(wb, mems):
             case '^':  # Bitwise XOR
                 if len(args) == 2:
                     # TODO assert input width are same
+                    assertions.append((args[0].bitwidth == args[1].bitwidth)
+                                      and (dest.bitwidth == args[0]))
+
                     assertion = dest == (args[0] ^ args[1])
                     assertions.append(assertion)
                     ops.append(('xor', args[0], args[1], dest))
                     
             case '~':  # Bitwise NOT
+                # assert input and output widths match
+                assertions.append(dest.bitwidth == args[0])
+                
                 assertion = dest == ~args[0]
                 assertions.append(assertion)
                 ops.append(('not', args[0], dest))
@@ -77,9 +91,14 @@ def net_to_smt(wb, mems):
                 # Concatenate arguments from left to right (most significant first)
                 if len(args) >= 2:
                     result = args[0]
+                    result_bitwidth = 0
                     for i in range(1, len(args)):
                         result = z3.Concat(result, args[i])
-                    # TODO assert dest width is the some of the input widths
+                        result_bitwidth += args[1].bitwidth
+
+                    # TODO assert dest width is the sum of the input widths
+                    assertions.append(dest.bitwidt == result_bitwidth)
+
                     assertion = dest == result
                     assertions.append(assertion)
                     ops.append(('concat', args, dest))
@@ -89,7 +108,10 @@ def net_to_smt(wb, mems):
                 if len(args) == 1 and net.op_param is not None:
                     if isinstance(net.op_param, tuple) and len(net.op_param) == 2:
                         high_bit, low_bit = net.op_param
+
                         # TODO assert dest width is highbit-lowbit+1
+                        assertions.append(dest.bitwidth == (high_bit - low_bit + 1))
+
                         assertion = dest == z3.Extract(high_bit, low_bit, args[0])
                         assertions.append(assertion)
                         ops.append(('extract', args[0], high_bit, low_bit, dest))
@@ -111,6 +133,9 @@ def net_to_smt(wb, mems):
             case '*':
                 if len(args) == 2:
                     # TODO assert dest width 2*n than the input width n
+                    assertions.append((args[0].bitwidth == args[1].bitwidth)
+                                      and (dest.bitwidth == args[0] * 2))
+                    
                     assertion = dest == (args[0] * args[1])
                     assertions.append(assertion)
                     ops.append(('mul', args[0], args[1], dest))
@@ -118,6 +143,9 @@ def net_to_smt(wb, mems):
             case '+':  # Addition
                 if len(args) == 2:
                     # TODO assert dest width is one bit more than the input width
+                    assertions.append((args[0].bitwidth == args[1].bitwidth)
+                                      and (dest.bitwidth == args[0] + 1))
+                    
                     assertion = dest == (args[0] + args[1])
                     assertions.append(assertion)
                     ops.append(('add', args[0], args[1], dest))
@@ -125,6 +153,9 @@ def net_to_smt(wb, mems):
             case '-':  # Subtraction
                 if len(args) == 2:
                     # TODO assert dest width is one bit more than the input width
+                    assertions.append((args[0].bitwidth == args[1].bitwidth)
+                                      and (dest.bitwidth == args[0] + 1))
+                    
                     assertion = dest == (args[0] - args[1])
                     assertions.append(assertion)
                     ops.append(('sub', args[0], args[1], dest))
